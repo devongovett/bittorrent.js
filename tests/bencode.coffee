@@ -4,8 +4,9 @@ bencode = require '../src/bencode'
 # decode
 assert.equal bencode.decode('4:spam'), 'spam'
 assert.equal bencode.decode('9:spam:alot'), 'spam:alot'
+assert.equal bencode.decode('0:'), ''
 assert.equal bencode.decode('i3e'), 3
-assert.equal bencode.decode('i300e'), 300
+assert.equal bencode.decode('i-3e'), -3
 assert.deepEqual bencode.decode('l4:spam4:eggse'), ['spam', 'eggs']
 assert.deepEqual bencode.decode('d3:cow3:moo4:spam4:eggse'), { cow: "moo", spam: "eggs" }
 assert.deepEqual bencode.decode('d4:spaml1:a1:bee'), { spam: [ "a", "b" ] }

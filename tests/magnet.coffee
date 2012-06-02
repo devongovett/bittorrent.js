@@ -25,3 +25,7 @@ assert.deepEqual magnet.parse(link),
     'magnet-info':
         info_hash: 'A9AC69A718A352DD1F7D8BE2A589391585755716'
         'display-name': 'The Avengers 2012 TS XviD AC3 ADTRG'
+        
+assert.throws -> magnet.parse('http://google.com/')
+assert.throws -> magnet.parse('magnet:?foo=bar')
+assert.throws -> magnet.parse('magnet:?xt=urn:foo:2I2UAEFDZJFN4W3UE65QSOTCUOEZ744B')

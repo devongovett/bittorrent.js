@@ -13,6 +13,8 @@ assert.deepEqual bencode.decode('d4:spaml1:a1:bee'), { spam: [ "a", "b" ] }
 assert.deepEqual bencode.decode('d9:publisher3:bob17:publisher-webpage15:www.example.com18:publisher.location4:homee'), 
     { "publisher": "bob", "publisher-webpage": "www.example.com", "publisher.location": "home" }
     
+assert.throws -> bencode.decode('z23e')
+    
 # encode
 assert.equal '4:spam', bencode.encode('spam')
 assert.equal '9:spam:alot', bencode.encode('spam:alot')
@@ -23,3 +25,9 @@ assert.equal 'd3:cow3:moo4:spam4:eggse', bencode.encode({ cow: "moo", spam: "egg
 assert.equal 'd4:spaml1:a1:bee', bencode.encode({ spam: [ "a", "b" ] })
 assert.equal 'd9:publisher3:bob17:publisher-webpage15:www.example.com18:publisher.location4:homee', 
     bencode.encode { "publisher": "bob", "publisher-webpage": "www.example.com", "publisher.location": "home" }
+    
+assert.throws -> bencode.encode(null)
+assert.throws -> bencode.encode(undefined)
+assert.throws -> bencode.encode(/regexp/)
+assert.throws -> bencode.encode(true)
+assert.throws -> bencode.encode(false)

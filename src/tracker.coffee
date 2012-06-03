@@ -32,9 +32,10 @@ class Tracker
         if not @connection
             @connection = new UDPConnection(@url)
             
-        @connection.announce info, (@interval, @leechers, @seeders, @peers) ->
+        @connection.announce info, (@interval, @leechers, @seeders, @peers) =>
             fn?()
-            
+
+# see http://xbtt.sourceforge.net/udp_tracker_protocol.html            
 class UDPConnection
     ACTION_CONNECT = 0
     ACTION_ANNOUNCE = 1
@@ -80,7 +81,7 @@ class UDPConnection
             
             @send message
         
-    announce: (data, @announceCallback) ->
+    announce: (data, @announce_callback) ->
         unless @connection_id
             @announce_data = data
             return @connect()
@@ -116,7 +117,7 @@ class UDPConnection
                 @connection_id = new Buffer(8)
                 msg.copy @connection_id, 0, 8, 16
                 
-                @announce @announce_data
+                @announce @announce_data, @announce_callback
                 delete @announce_data
                 
             when ACTION_ANNOUNCE
@@ -133,8 +134,8 @@ class UDPConnection
                     offset += 2
                     peers.push new Peer(address, port)
                 
-                @announceCallback? interval, leechers, seeders, peers
-                delete @announceCallback
+                @announce_callback? interval, leechers, seeders, peers
+                delete @announce_callback
                 
             when ACTION_ERROR
                 err = msg.toString('ascii', 8)

@@ -89,18 +89,19 @@ class UDPConnection
         @transaction =>
             message = new Buffer(98)
             
-            @connection_id.copy(message, 0, 0, 8)
-            message.writeUInt32BE(ACTION_ANNOUNCE, 8)
-            message.writeUInt32BE(@transaction_id, 12)
-            data.info_hash.copy(message, 16, 0, 20)
-            data.peer_id.copy(message, 36, 0, 20)
-            message.fill(0, 56, 64)
-            message.fill(0, 64, 72)
-            message.writeUInt32BE(EVENT_STARTED, 80)
-            message.writeUInt32BE(0, 84) # ip
-            message.writeUInt32BE(0, 88) # key
-            message.writeInt32BE(50, 92) # num_want
-            message.writeUInt16BE(6881, 96) # port
+            @connection_id.copy(message, 0, 0, 8)       # connection_id
+            message.writeUInt32BE(ACTION_ANNOUNCE, 8)   # announce type
+            message.writeUInt32BE(@transaction_id, 12)  # transaction_id
+            data.info_hash.copy(message, 16)            # info_hash
+            data.peer_id.copy(message, 36)              # peer_id
+            message.fill(0, 56, 64)                     # downloaded
+            message.fill(0, 64, 72)                     # left
+            message.fill(0, 72, 80)                     # uploaded
+            message.writeUInt32BE(EVENT_STARTED, 80)    # event
+            message.writeUInt32BE(0, 84)                # ip
+            message.writeUInt32BE(0, 88)                # key
+            message.writeInt32BE(50, 92)                # num_want
+            message.writeUInt16BE(6881, 96)             # port
             
             @send message
         
@@ -114,8 +115,7 @@ class UDPConnection
         switch action
             when ACTION_CONNECT
                 # no 64 bit integers in JS, so just store it as a buffer
-                @connection_id = new Buffer(8)
-                msg.copy @connection_id, 0, 8, 16
+                @connection_id = msg.slice(0, 8)
                 
                 @announce @announce_data, @announce_callback
                 delete @announce_data

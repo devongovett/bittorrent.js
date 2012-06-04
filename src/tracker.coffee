@@ -60,7 +60,7 @@ class UDPConnection
             fn?()
         
     send: (message, fn) ->
-        @connection.send message, 0, message.length, @url.port, @url.hostname, fn
+        @connection.send message, 0, message.length, @url.port or 80, @url.hostname, fn
         
     connect: (fn) ->
         @transaction =>

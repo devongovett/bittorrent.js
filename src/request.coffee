@@ -15,7 +15,9 @@ class Request
         message.writeUInt32BE(13, @length)
         
         @peer.send message
+        
         @sentAt = Date.now()
+        @peer.pendingRequests++
         
     cancel: ->
         message = new Buffer(17)
@@ -27,3 +29,4 @@ class Request
         message.writeUInt32BE(13, @length)
         
         @peer.send message
+        @peer.pendingRequests--

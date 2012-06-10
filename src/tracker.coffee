@@ -10,14 +10,15 @@ class Tracker
         @leechers = 0
         @connection = null
         
-        @peer_id = new Buffer(20)
-        @peer_id.write('-NJ0001-', 0, 'ascii')
-        while @peer_id.length < 20
-            for i in [8...20] by 1
-                @peer_id[i] += Math.floor(Math.random() * 256)
-        
+        @peerId = new Buffer('2d4e4a303030312d502180e9bf7f000081660a2e', 'hex')
+        # @peerId = new Buffer(20)
+        # @peerId.write('-NJ0001-', 0, 'ascii')
+        # while @peerId.length < 20
+        #     for i in [8...20] by 1
+        #         @peerId[i] += Math.floor(Math.random() * 256)
+                        
     announce: (info, fn) ->
-        info.peer_id = @peer_id
+        info.peerId = @peerId
         
         if @url.slice(0, 6) is 'udp://'
             @udpAnnounce info, fn
@@ -35,7 +36,7 @@ class Tracker
         @connection.announce info, (@interval, @leechers, @seeders, @peers) =>
             fn?()
 
-# see http://xbtt.sourceforge.net/udp_tracker_protocol.html            
+# see http://xbtt.sourceforge.net/udp_tracker_protocol.html
 class UDPConnection
     ACTION_CONNECT = 0
     ACTION_ANNOUNCE = 1
@@ -93,7 +94,7 @@ class UDPConnection
             message.writeUInt32BE(ACTION_ANNOUNCE, 8)   # announce type
             message.writeUInt32BE(@transaction_id, 12)  # transaction_id
             data.info_hash.copy(message, 16)            # info_hash
-            data.peer_id.copy(message, 36)              # peer_id
+            data.peerId.copy(message, 36)              # peerId
             message.fill(0, 56, 64)                     # downloaded
             message.fill(0, 64, 72)                     # left
             message.fill(0, 72, 80)                     # uploaded
@@ -145,5 +146,10 @@ class UDPConnection
     error: (err) =>
         @connection.close()
         throw new Error(err)
+        
+tracker = new Tracker('udp://tracker.openbittorrent.com:80')
+tracker.announce({ 
+    info_hash: new Buffer('ab08822b8497dabcf668aa760794fbfe1e57e09f', 'hex')
+}, -> console.log tracker.peers)
     
 module.exports = Tracker

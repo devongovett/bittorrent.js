@@ -21,16 +21,27 @@ class Peer extends EventEmitter
         @peerIsChoked = true         # this client is choking the peer
         @clientIsInterested = false  # the client is interested in the peer
         
-        # TODO: use same peer_id as tracker
-        @peer_id = @torrent.peer_id#new Buffer('2d4e4a303030312d502180e9bf7f000081660a2e', 'hex')
-        @bitfield = new Bitfield(973)
+        @peerId = @torrent.peerId
+        @have = new Bitfield(@torrent.pieceCount)
+        @blame = new Bitfield(@torrent.blockCount)
         
-        @connected = false
-        @progress = 0.0 # percentage of the torrent this peer has
+        # connection info
+        @connected = false              # are we connected right now?
+        @numFails = 0                   # number of failed connection attempts
+        @lastConnectionAttempt = null   # time of last connection attempt
+        @lastConnection = null          # time of last successful connection
+        @blocklisted = false            # whether the peer is blocklisted
+        @strikes = 0                    # number of bad pieces the peer has contributed to
+        
+        # flags
+        # @supportsEncryption = null
+        # @supportsUTP = null
+        # @supportsHolepunch = null
+        # @connectable = true
+        
+        @progress = 0.0         # percentage of the torrent this peer has
         @seedProbability = 0
-        
-        @requests = [] # requests that this peer has made
-        @pendingRequests = 0
+        @pendingRequests = 0    # how many pending requests we've made to this peer
         
     shouldDownload: ->
         @clientIsInterested and not @clientIsChoked
@@ -40,6 +51,9 @@ class Peer extends EventEmitter
         
     isSeed: ->
         @seedProbability is 100
+        
+    has: (piece) ->
+        @have.has(piece)
         
     connect: ->
         @client = net.connect @port, @address, =>
@@ -57,7 +71,7 @@ class Peer extends EventEmitter
         message.write('BitTorrent protocol', 1, 'ascii')
         message.fill(0, 20, 28) # reserved
         @data.info_hash.copy(message, 28)
-        @peer_id.copy(message, 48)
+        @peerId.copy(message, 48)
         
         @handshaking = true
         @send message
@@ -68,7 +82,7 @@ class Peer extends EventEmitter
             return @client.destroy()
             
         info_hash = msg.slice(28, 48)
-        peer_id = msg.slice(48, 68)
+        peerId = msg.slice(48, 68)
         
         @handshaking = false
         @emit 'handshakeComplete'
@@ -120,16 +134,16 @@ class Peer extends EventEmitter
                 
             when HAVE
                 piece = msg.readUInt32BE(5)
-                unless @bitfield.has(piece)
-                    @bitfield.add(piece) # TODO: check piece < pieces
+                unless @have.has(piece)
+                    @have.add(piece) # TODO: check piece < pieces
                     @emit 'have', piece
                     
                 @updateProgress()
                 
             when BITFIELD
                 data = msg.slice(5, 5 + len - 1)
-                @bitfield.set(data)
-                @emit 'bitfield', @bitfield
+                @have.set(data)
+                @emit 'bitfield', @have
                 @updateProgress()
                 
             when REQUEST
@@ -142,7 +156,7 @@ class Peer extends EventEmitter
                 piece = msg.readUInt32BE(5)
                 begin = msg.readUInt32BE(9)
                 data = msg.slice(12, 12 + len - 9)
-                @emit 'piece', piece, begin, data
+                @emit 'data', piece, begin, data
                 
             when CANCEL
                 piece = msg.readUInt32BE(5)
@@ -164,15 +178,15 @@ class Peer extends EventEmitter
             @message null
             
     updateProgress: ->
-        if @bitfield.hasAll()
+        if @have.hasAll()
             @progress = 1.0
             
-        else if @bitfield.hasNone()
+        else if @have.hasNone()
             @progress = 0.0
             
         else
             # TODO: if no metadata...
-            @progress = @bitfield.trueCount / @torrent.pieces
+            @progress = @have.trueCount / @torrent.pieceCount
             
     sendHave: (piece) ->
         message = new Buffer(9)

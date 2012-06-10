@@ -71,3 +71,13 @@ assert.equal bits.hasAll(), false
 assert.equal bits.hasNone(), false
 for i in [0...500]
     assert.equal bits.has(i), i % 7 is 0
+
+assert.equal bits.countInRange(0, 100), 15
+assert.equal bits.countInRange(0, 500), 72
+assert.equal bits.countInRange(0, 0), 0
+assert.equal bits.countInRange(500, 0), 0
+assert.equal bits.countInRange(800, 850), 0
+assert.equal bits.countInRange(0, 1), 1
+assert.equal bits.countInRange(0, 7), 1
+assert.equal bits.countInRange(0, 8), 2
+assert.equal bits.countInRange(6, 8), 1
